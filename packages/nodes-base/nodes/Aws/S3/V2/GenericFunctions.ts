@@ -66,8 +66,9 @@ export async function awsApiRequestREST(
 		options,
 		region,
 	);
-	// S3 DELETE operations return HTTP 204 No Content (empty body).
-	// Guard against empty/non-string responses before attempting to parse.
+	// Some S3 endpoints return HTTP 204 No Content with an empty body
+	// (e.g. DeleteBucket, DeleteObject). Guard against empty/non-string
+	// responses before attempting XML or JSON parsing.
 	if (!response || typeof response !== 'string' || response.trim() === '') {
 		return response;
 	}
