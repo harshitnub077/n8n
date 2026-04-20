@@ -352,3 +352,83 @@ describe('AWS S3 V2 Node - File Download', () => {
 		});
 	});
 });
+
+describe('AWS S3 V2 Node - Bucket Delete', () => {
+	const executeFunctionsMock = mockDeep<IExecuteFunctions>();
+	const awsApiRequestRESTSpy = jest.spyOn(GenericFunctions, 'awsApiRequestREST');
+	let node: AwsS3V2;
+
+	beforeEach(() => {
+		jest.resetAllMocks();
+		node = new AwsS3V2({
+			displayName: 'AWS S3',
+			name: 'awsS3',
+			icon: 'file:s3.svg',
+			group: ['output'],
+			description: 'Sends data to AWS S3',
+		});
+
+		executeFunctionsMock.getCredentials.mockResolvedValue({
+			accessKeyId: 'test-key',
+			secretAccessKey: 'test-secret',
+			region: 'eu-central-1',
+		});
+
+		executeFunctionsMock.getNode.mockReturnValue({
+			typeVersion: 2,
+		} as INode);
+
+		executeFunctionsMock.getInputData.mockReturnValue([{ json: {} }]);
+		executeFunctionsMock.continueOnFail.mockReturnValue(false);
+
+		executeFunctionsMock.helpers.returnJsonArray.mockImplementation((data) =>
+			Array.isArray(data) ? data.map((item) => ({ json: item })) : [{ json: data }],
+		);
+
+		executeFunctionsMock.helpers.constructExecutionMetaData.mockImplementation(
+			(data) => data as any,
+		);
+
+		executeFunctionsMock.getNodeParameter.mockImplementation((paramName) => {
+			switch (paramName) {
+				case 'resource':
+					return 'bucket';
+				case 'operation':
+					return 'delete';
+				case 'name':
+					return 'my-test-bucket';
+				default:
+					return undefined;
+			}
+		});
+	});
+
+	it('should send a DELETE request to the correct bucket endpoint and return success', async () => {
+		// S3 returns HTTP 204 No Content (empty body) on successful bucket deletion
+		awsApiRequestRESTSpy.mockResolvedValueOnce(undefined);
+
+		const result = await node.execute.call(executeFunctionsMock);
+
+		expect(awsApiRequestRESTSpy).toHaveBeenCalledTimes(1);
+		expect(awsApiRequestRESTSpy).toHaveBeenCalledWith(
+			'my-test-bucket.s3',
+			'DELETE',
+			'',
+			'',
+			{},
+			{},
+		);
+
+		expect(result).toHaveLength(1);
+		expect(result[0]).toHaveLength(1);
+		expect(result[0][0]).toMatchObject({ json: { success: true } });
+	});
+
+	it('should return success even when the API returns an empty string (204 No Content)', async () => {
+		awsApiRequestRESTSpy.mockResolvedValueOnce('');
+
+		const result = await node.execute.call(executeFunctionsMock);
+
+		expect(result[0][0]).toMatchObject({ json: { success: true } });
+	});
+});

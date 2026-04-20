@@ -66,6 +66,11 @@ export async function awsApiRequestREST(
 		options,
 		region,
 	);
+	// S3 DELETE operations return HTTP 204 No Content (empty body).
+	// Guard against empty/non-string responses before attempting to parse.
+	if (!response || typeof response !== 'string' || response.trim() === '') {
+		return response;
+	}
 	try {
 		if (response.includes('<?xml version="1.0" encoding="UTF-8"?>')) {
 			return await new Promise((resolve, reject) => {
