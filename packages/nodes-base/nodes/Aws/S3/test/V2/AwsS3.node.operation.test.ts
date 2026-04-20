@@ -18,10 +18,19 @@ const mockFileResponse = {
 	},
 };
 
+let awsApiRequestRESTSpy: jest.SpiedFunction<typeof GenericFunctions.awsApiRequestREST>;
+
 describe('AWS S3 V2 Node - File Download', () => {
 	const executeFunctionsMock = mockDeep<IExecuteFunctions>();
-	const awsApiRequestRESTSpy = jest.spyOn(GenericFunctions, 'awsApiRequestREST');
 	let node: AwsS3V2;
+
+	beforeAll(() => {
+		awsApiRequestRESTSpy = jest.spyOn(GenericFunctions, 'awsApiRequestREST');
+	});
+
+	afterAll(() => {
+		awsApiRequestRESTSpy.mockRestore();
+	});
 
 	beforeEach(() => {
 		jest.resetAllMocks();
@@ -355,8 +364,15 @@ describe('AWS S3 V2 Node - File Download', () => {
 
 describe('AWS S3 V2 Node - Bucket Delete', () => {
 	const executeFunctionsMock = mockDeep<IExecuteFunctions>();
-	const awsApiRequestRESTSpy = jest.spyOn(GenericFunctions, 'awsApiRequestREST');
 	let node: AwsS3V2;
+
+	beforeAll(() => {
+		awsApiRequestRESTSpy = jest.spyOn(GenericFunctions, 'awsApiRequestREST');
+	});
+
+	afterAll(() => {
+		awsApiRequestRESTSpy.mockRestore();
+	});
 
 	beforeEach(() => {
 		jest.resetAllMocks();
